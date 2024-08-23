@@ -2,7 +2,8 @@
 
 import createError from "../utils/errorHandler.js";
 import defineUserModel from './../models/user.js';
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 //obtener lista de usuarios.
 const getAllUsers = async () => {
@@ -87,11 +88,40 @@ const deleteUser = async(id) =>{
     }
 }
 
+const login = async(user) =>{
+    const {email, password} = user;
+    try {
+        const User = await defineUserModel();
+        //buscar usuario por email
+        const userExist = await User.findOne({where: {email}});
+        if (!userExist) throw createError(401, 'Usuario o contraseña invalidos');
+        //encriptar y comparar contraseña
+        const isValidPassword = await bcrypt.compareSync(password, userExist.password);
+        if (!isValidPassword) throw createError(401, 'Usuario o contraseña invalidos');
+        //construir DTO con datos no sensibles
+        const userDTO = {
+            id: userExist.id,
+            name: userExist.name,
+            email: userExist.email,
+            rol: userExist.rol
+        };
+        //construir json Web token
+        const token = jwt.sign(userDTO, 'palabraSecreta',{
+            expiresIn: '1h'
+        });
+        return token;
+
+    } catch (error) {
+        throw createError(error.status || 500, error.message || 'Error al iniciar sesion');
+    }
+}
+
 
 export const userService = {
     getAllUsers,
     createUser,
     getUserById,
     updateUser,
-    deleteUser
+    deleteUser,
+    login
 }

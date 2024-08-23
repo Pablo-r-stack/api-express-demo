@@ -82,6 +82,23 @@ const deleteUser = (async (req, res) => {
     }
 });
 
+const login = (async (req, res)=>{
+    //recibimos credenciales del usuario a loguear
+    const data = req.body;
+    try {
+        //llamo al servicio
+        const token = await userService.login(data);
+        //devuelve respuesta
+        res.status(200).json({message: 'Login exitoso', token: token});
+    } catch (error) {
+        res.status(error.status || 500).json({ message: error.message });
+    }
+});
+
+const logout = (async (req, res)=>{
+    res.status(200).json({message: 'Deslogueado con exito'});
+})
+
 export const userController = {
-    userList, userRegister, getUserById, modifyUser, deleteUser
+    userList, userRegister, getUserById, modifyUser, deleteUser, login, logout
 }
